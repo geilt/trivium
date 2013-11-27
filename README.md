@@ -7,9 +7,17 @@ Latest Version: `1.0`
 
 Trivium does all the configuration for you to run a basic web app with socket.io, express routes and even timed or one time / server start events. We do this by giving you a template by which to plan out your app. All you have to do is add the appropriate files and declarations and you are good to go! Trivium is great for front-end websites, back-end applications, API's and pretty much anything else.
 
+
 ## Server Requirements
-### `NodeJS`, `NPM`, `MongoDB`
+### `NodeJS`, `NPM`, `MongoDB` *Optional `Redis`, `mySQL`
 Trivium currently needs mongo to run it's sessions. Sessions running on mySQL / Redis are being considered for the future as well as running on a the filesystem. Trivium supports mySQL and Redis if there is a config for each available and will add the connections into every controller.
+
+## Installation
+1. Clone the repo `git clone git@github.com:geilt/trivium.git`
+2. Run `npm install`
+3. Modify `config.js` with your server information. Make sure to go over all of it. Optional sections are marked.
+4. Run `node index.js`
+5. Start Modifying files in `/app` and `/public`. Follow the pattern set by the Sample App. Instructions are included in the sample files. You can delete them when you are ready. 
 
 # Documentation
 ## Basics
