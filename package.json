@@ -1,0 +1,38 @@
+{
+  "name": "Trivium",
+  "preferGlobal": false,
+  "version": "0.1.0",
+  "author": "Alexander Conroy <alex@gei.lt>",
+  "description": "A Node Framework based on the concept that routes, web sockets and chronological events should be trivial.",
+  "contributors": [ 
+    {
+      "name": "Alexander Conroy",
+      "email": "alex@gei.lt"
+    },
+    {
+      "name": "Gregory Conroy",
+      "email": "sudravirodhin@gmail.com"
+    },
+    {
+      "name": "Robert Pitt",
+      "email": "robertpitt1988@gmail.com"
+    }
+  ],
+  "dependencies" : {
+    "mongoose": "*",
+    "mongodb": "*",
+    "mysql": "*",
+    "redis": "*",
+    "passport": "*",
+    "connect": "*",
+    "express": "*",
+    "socket.io": "*",
+    "cookie": "*",
+    "jade": "*",
+    "stylus": "*",
+    "nib": "*"
+  },
+  "engines": {
+    "node": ">=0.6"
+  }
+}
