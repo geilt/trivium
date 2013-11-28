@@ -36,7 +36,7 @@ module.exports = {
 		 * @param  {object} res http://expressjs.com/api.html#res.status
 		 * @return {void}   
 		 */
-		action: function(req, res){
+		sample: function(req, res){
 			res.render('sample', {
 				title: 'Sample Action'
 			});
