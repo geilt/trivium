@@ -1,0 +1,195 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Trivium by geilt</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1 class="header">Trivium</h1>
+        <p class="header">A Node Framework is based on the concept that routes, web sockets and chronological events should be trivial.</p>
+
+        <ul>
+          <li class="download"><a class="buttons" href="https://github.com/geilt/trivium/zipball/master">Download ZIP</a></li>
+          <li class="download"><a class="buttons" href="https://github.com/geilt/trivium/tarball/master">Download TAR</a></li>
+          <li><a class="buttons github" href="https://github.com/geilt/trivium">View On GitHub</a></li>
+        </ul>
+
+        <p class="header">This project is maintained by <a class="header name" href="https://github.com/geilt">geilt</a></p>
+
+
+      </header>
+      <section>
+        <h1>
+<a name="triviumjs" class="anchor" href="#triviumjs"><span class="octicon octicon-link"></span></a>trivium.js</h1>
+
+<p>A Node Framework based on the concept that routes, web sockets and chronological events should be trivial.</p>
+
+<p>Latest Version: <code>1.0</code></p>
+
+<p>Trivium does all the configuration for you to run a basic web app with socket.io, express routes and even timed or one time / server start events. We do this by giving you a template by which to plan out your app. All you have to do is add the appropriate files and declarations and you are good to go! Trivium is great for front-end websites, back-end applications, API's and pretty much anything else.</p>
+
+<h2>
+<a name="server-requirements" class="anchor" href="#server-requirements"><span class="octicon octicon-link"></span></a>Server Requirements</h2>
+
+<h3>
+<a name="nodejs-npm-mongodb-optional-redis-mysql" class="anchor" href="#nodejs-npm-mongodb-optional-redis-mysql"><span class="octicon octicon-link"></span></a><code>NodeJS</code>, <code>NPM</code>, <code>MongoDB</code> *Optional <code>Redis</code>, <code>mySQL</code>
+</h3>
+
+<p>Trivium currently needs mongo to run it's sessions. Sessions running on mySQL / Redis are being considered for the future as well as running on a the filesystem. Trivium supports mySQL and Redis if there is a config for each available and will add the connections into every controller.</p>
+
+<h2>
+<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
+
+<ol>
+<li>Clone the repo <code>git clone git@github.com:geilt/trivium.git</code>
+</li>
+<li>Run <code>npm install</code>
+</li>
+<li>Modify <code>config.js</code> with your server information. Make sure to go over all of it. Optional sections are marked.</li>
+<li>Run <code>node index.js</code>
+</li>
+<li>Start Modifying files in <code>/app</code> and <code>/public</code>. Follow the pattern set by the Sample App. Instructions are included in the sample files. You can delete them when you are ready. </li>
+</ol><h1>
+<a name="documentation" class="anchor" href="#documentation"><span class="octicon octicon-link"></span></a>Documentation</h1>
+
+<h2>
+<a name="basics" class="anchor" href="#basics"><span class="octicon octicon-link"></span></a>Basics</h2>
+
+<p>The only files that you should be dealing with are those within <code>/app/</code>, <code>'/public/</code>, <code>package.json</code> and <code>config.js</code>. Everything else automatically configures itself based off of your file names and function names.</p>
+
+<p><code>/system</code> and <code>index.js</code> are required for the Framework to run. The framework references the previously mentioned folders.</p>
+
+<h2>
+<a name="controllers" class="anchor" href="#controllers"><span class="octicon octicon-link"></span></a>Controllers</h2>
+
+<p>Folder: <code>/app/controllers/</code> File Naming Convention: <code>yourcontroller.controller.js</code></p>
+
+<p>Trivium uses automaticallty configured <a href="https://github.com/visionmedia/express">Express</a> routes based on the file names of the controller and the object names within. It uses a similar approach with <a href="https://github.com/learnboost/socket.io/">Socket.io</a>, the only difference being that there is no default (main) websocket as there is a default(main) Express route.</p>
+
+<p>Controllers accept 3 different values that should be placed into exports for auto loading. More information can be found in the included sample controller found at <code>/app/controllers/sample.controller.js</code>.</p>
+
+<div class="highlight highlight-js"><pre><span class="c1">//Controller sample.controller.js</span>
+<span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">init</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+
+    <span class="p">}</span>
+    <span class="nx">actions</span><span class="o">:</span> <span class="p">{</span>
+        <span class="nx">main</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">res</span><span class="p">,</span> <span class="nx">req</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">//Default Action Route for a Controller (website.com/sample)</span>
+            <span class="nx">res</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="s1">'sample'</span><span class="p">,</span> <span class="p">{</span>
+                <span class="nx">title</span><span class="o">:</span> <span class="s1">'Main Action'</span>
+            <span class="p">});</span>
+        <span class="p">},</span>
+        <span class="nx">sample</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">res</span><span class="p">,</span> <span class="nx">req</span><span class="p">){</span>
+            <span class="c1">//Action Route for a Controller (website.com/sample/sample)</span>
+            <span class="nx">res</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="s1">'sample'</span><span class="p">,</span> <span class="p">{</span>
+                <span class="nx">title</span><span class="o">:</span> <span class="s1">'Sample Action'</span>
+            <span class="p">});</span>
+        <span class="p">}</span>
+    <span class="p">},</span> 
+    <span class="nx">websockets</span><span class="o">:</span> <span class="p">{</span>
+        <span class="nx">sample</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">data</span><span class="p">,</span> <span class="nx">send</span><span class="p">){</span>
+            <span class="c1">//Action Websocket for a Controller ('sample/sample')</span>
+            <span class="nx">res</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="s1">'sample'</span><span class="p">,</span> <span class="p">{</span>
+                <span class="nx">title</span><span class="o">:</span> <span class="s1">'Sample Action'</span>
+            <span class="p">});</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+</pre></div>
+
+<p>Controllers have had the following values bound into them via a System Controller. The null values are replaced with system generated data at runtime.</p>
+
+<div class="highlight highlight-js"><pre><span class="k">this</span><span class="p">.</span><span class="nx">config</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+
+<span class="k">this</span><span class="p">.</span><span class="nx">mongoose</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+<span class="k">this</span><span class="p">.</span><span class="nx">mysql</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+<span class="k">this</span><span class="p">.</span><span class="nx">redis</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+
+<span class="k">this</span><span class="p">.</span><span class="nx">socket</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+<span class="k">this</span><span class="p">.</span><span class="nx">app</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+
+<span class="k">this</span><span class="p">.</span><span class="nx">library</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+<span class="k">this</span><span class="p">.</span><span class="nx">utils</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+
+<span class="k">this</span><span class="p">.</span><span class="nx">session</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
+</pre></div>
+
+<h3>
+<a name="init--cron-single-fire-timed-or-reoccuring-events" class="anchor" href="#init--cron-single-fire-timed-or-reoccuring-events"><span class="octicon octicon-link"></span></a>Init &amp; Cron (Single Fire, Timed or Reoccuring Events)</h3>
+
+<p>You can place events that should be running persistently in the init function inside of each relevant controller. This will allow you to run "one time" blocks of code as well as use setTimeout or setInterval for processes that don't require user input. You can have an init on each controller and they will all run on load. This is a synchronous process as all inits are run in no particular order (May change in further versions).</p>
+
+<div class="highlight highlight-js"><pre><span class="nx">init</span><span class="o">:</span> <span class="kd">function</span><span class="p">(){</span>
+    <span class="c1">//Do your stuff here.   </span>
+<span class="p">}</span>
+</pre></div>
+
+<h2>
+<a name="models" class="anchor" href="#models"><span class="octicon octicon-link"></span></a>Models</h2>
+
+<p>Folder: <code>/app/models/</code> File Naming Convention: <code>sample.model.js</code></p>
+
+<p>Models should include Schema declarations at the top of the file. By default, Trivium uses <a href="https://github.com/learnboost/mongoose/">Mongoose</a> for Mongo and prefers to use Mongo for session data. For information on Mongoose Schemas the <a href="http://mongoosejs.com/">Mongoose Documentation</a>, please see (Further Revisions will open different automated session options based on config values present for redis and mySQL or use the filesytem if no database is present at all).</p>
+
+<h2>
+<a name="libraries" class="anchor" href="#libraries"><span class="octicon octicon-link"></span></a>Libraries</h2>
+
+<p>Folder: <code>/app/lib/</code> File Naming Convention: <code>sample/sample.js</code></p>
+
+<p>Libraries collect files in library folders as objects. The above example would be used in a controller as <code>this.library.sample.sample</code></p>
+
+<h2>
+<a name="views" class="anchor" href="#views"><span class="octicon octicon-link"></span></a>Views</h2>
+
+<p>Folder: <code>/app/views/</code> File Naming Convention: <code>sample.jade</code></p>
+
+<p>Trivium uses <a href="https://github.com/visionmedia/jade">Jade</a> templates to render views.</p>
+
+<h2>
+<a name="css" class="anchor" href="#css"><span class="octicon octicon-link"></span></a>CSS</h2>
+
+<p>Folder: <code>/public/css/</code> File Naming Convention: <code>style.styl</code></p>
+
+<p>Trivium uses <a href="https://github.com/learnboost/stylus">Stylus</a>. with <a href="https://github.com/visionmedia/nib">Nib</a> for CSS.</p>
+
+<p>You can organize the CSS folder however you want. Files will show up as <code>website.com/css/style.css</code>. When you create a .styl file, the .css will automatically be generated when the server starts and put into the same folder as the file you created. Stylus monitors the <code>/public/css</code> folder for files to interpret before the system runs. It will catch the .css request and create it if there is a .styl file available of the same name. </p>
+
+<h2>
+<a name="images" class="anchor" href="#images"><span class="octicon octicon-link"></span></a>Images</h2>
+
+<p>Folder: <code>/public/img/</code></p>
+
+<p>You can organize the image folder however you want. Files will show up as <code>website.com/img/image.jpg</code></p>
+
+<h2>
+<a name="js" class="anchor" href="#js"><span class="octicon octicon-link"></span></a>JS</h2>
+
+<p>Folder: <code>/public/js/</code></p>
+
+<p>You can organize the JS folder however you want. Files will show up as <code>website.com/js/script.js</code></p>
+
+<p>If you want to use sockets you must include the following socket command. Be sure to to correct the domain and port you are connecting to. More information can be found in the <a href="http://socket.io/#how-to-use">Socket.io Documentation</a></p>
+
+<div class="highlight highlight-js"><pre><span class="kd">var</span> <span class="nx">socket</span> <span class="o">=</span> <span class="nx">io</span><span class="p">.</span><span class="nx">connect</span><span class="p">(</span><span class="s1">'http://website.com:11342'</span><span class="p">);</span>
+</pre></div>
+      </section>
+      <footer>
+        <p><small>Hosted on <a href="http://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+		
+  </body>
+</html>
