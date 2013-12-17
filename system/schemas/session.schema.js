@@ -32,7 +32,6 @@ var Session = new Mongoose.Schema({
  * @param {Function} callback callback for completion
  */
 Session.statics.set = function(sid, session, callback) {
-	console.log('Session Schem', session);
     try {
         var newSession = {
             session: session
@@ -86,7 +85,6 @@ Session.statics.get = function(sid, callback) {
              */
             if (result) {
                 if (!result.expires || new Date() < result.expires) {
-                	console.log('Result: ', result);
                     callback(null, result.session);
                     return;
                 }
@@ -140,14 +138,67 @@ Session.statics.getCollection = function() {
 };
 
 /**
+ * Re-generate the given requests's session.
+ *
+ * @param {IncomingRequest} req
+ * @return {Function} fn
+ * @api public
+ */
+
+/*Session.statics.regenerate = function(req, fn){
+  var self = this;
+  this.destroy(req.sessionID, function(err){
+    self.generate(req);
+    fn(err);
+  });
+};*/
+/**
+ * Load a `Session` instance via the given `sid`
+ * and invoke the callback `fn(err, sess)`.
+ *
+ * @param {String} sid
+ * @param {Function} fn
+ * @api public
+ */
+
+Session.statics.load = function(sid, fn){
+  var self = this;
+  this.get(sid, function(err, sess){
+    if (err) return fn(err);
+    if (!sess) return fn();
+    var req = { sessionID: sid, sessionStore: self };
+    sess = self.createSession(req, sess);
+    fn(null, sess);
+  });
+};
+
+/**
+ * Create session from JSON `sess` data.
+ *
+ * @param {IncomingRequest} req
+ * @param {Object} sess
+ * @return {Session}
+ * @api private
+ */
+
+/*Session.statics.createSession = function(req, sess){
+  var expires = sess.cookie.expires
+    , orig = sess.cookie.originalMaxAge;
+  sess.cookie = new Cookie(sess.cookie);
+  if ('string' == typeof expires) sess.cookie.expires = new Date(expires);
+  sess.cookie.originalMaxAge = orig;
+  req.session = new Session(req, sess);
+  return req.session;
+};*/
+/**
  * Get the collection
  *
  * @param
  * @api public
  */
 Session.statics.createSession = _Store.prototype.createSession.bind(_Store.Store);
-Session.statics.load = _Store.prototype.load.bind(_Store.Store);
+//Session.statics.load = _Store.prototype.load.bind(_Store.Store);
 Session.statics.regenerate = _Store.prototype.regenerate.bind(_Store.Store);
 
 //export the model
-module.exports = Mongoose.model("Session", Session);
+module.exports = Mongoose.model("Sessions", Session);

@@ -147,3 +147,17 @@ exports.replaceClientOnDisconnect = function(client) {
 		});
 	});
 };
+exports.hasProperties = function(obj, prop){
+	if( typeof obj === 'object' 
+		&& typeof prop === 'object' 
+		&& Object.prototype.toString.call( obj ) !== '[object Array]'
+		&& Object.prototype.toString.call( prop ) === '[object Array]'){
+		for(var i in prop){
+			if(!prop.hasOwnProperty(i)){
+				return false;
+			}
+		}	
+		return true;
+	}
+	return false;
+};

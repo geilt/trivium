@@ -25,9 +25,10 @@ module.exports = {
 		 * @param  {object} res http://expressjs.com/api.html#res.status
 		 * @return {void}     
 		 */
-		main: function(req, res) {
+		main: function(req, res, session) {
 			res.render('sample', {
-				title: 'Main Action'
+				title: 'Main Action',
+				content: session.sample || ''
 			});
 		},
 		/**
@@ -36,9 +37,10 @@ module.exports = {
 		 * @param  {object} res http://expressjs.com/api.html#res.status
 		 * @return {void}   
 		 */
-		sample: function(req, res){
+		sample: function(req, res, session){
 			res.render('sample', {
-				title: 'Sample Action'
+				title: 'Sample Action',
+				content: req.session.test || ''
 			});
 		}
 	},
@@ -47,12 +49,14 @@ module.exports = {
 		 * A Websocket Listener (sample/sample)	http://socket.io/#how-to-use
 		 * @param  {object|array} data information recieved from the event. Usually an object
 		 * @param  {callback} send a callback function to return to the event. Pass in an object if desired.
-		 * @return {void}      [description]
+		 * @param  {session} the Session object. 
+		 * @return {mixed} return values will be send back to the emmiting client.
 		 */
-		sample: function(data, send) {
-			send({
-				result: 'sample'
-			});
+		sample: function(data, socket, session) {
+			var newSample = data.input + ' Sample';
+			session.sample = newSample;
+			socket.emit('sample/emit', newSample);
+			return {'test': 'test'};
 		}
 	}
 };

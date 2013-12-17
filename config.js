@@ -11,11 +11,12 @@ exports.server = {
 	domain: 'triviumjs.com', // Your Domain
 	root: __dirname, //Needed for System to run. Resolved Path issues.
 	secret: 'aspfnweovt234890pth9834hbt9w3', // Used for Sessions / Cookies
-	key: 'trivium' // Used for Cookies
+	key: 'trivium', // Used for Cookies
+	session: 'mongo' //{mongo, mysql, memory, redis}
 };
 /**
  * MongoDB
- * Mandatory
+ * Optional
  * @type {Object}
  */
 exports.mongo = {
@@ -28,15 +29,13 @@ exports.mongo = {
 	name: 'Trivium'
 };
 
-exports.mongo.dsn = 'mongodb://' + exports.mongo.host + ':'+ exports.mongo.port + '/' + exports.mongo.db,
-
 /**
  * Redis Config
  * Optional
  * @type {Object}
  */
 exports.redis = {
-	post: '6379',
+	port: '6379',
 	host: '127.0.0.1',
 	options: {}
 };

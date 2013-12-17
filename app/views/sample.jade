@@ -4,4 +4,5 @@ block main
 	.container
 		h2 #{title}
 		.row
-			.col-lg-12 #{content}
+			input(type='text', style='width: 200px; display: inline-block;', value='#{content}').sample-text.form-control
+			button.btn.btn-default.sample-button Sample Socket Action

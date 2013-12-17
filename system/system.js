@@ -14,12 +14,7 @@ var config = require('../config'),
 	nib = require('nib'),
 	connect = require('connect'),
 	cookie = require('cookie'),
-	router = require('./router');
-
-/**
- * Connect to the Databases
- */
-database.mongoose.connect(config.mongo.dsn);
+	sessionStore = require('./session.js').sessionStore();
 
 /**
  * Start the app with Express!
@@ -29,22 +24,15 @@ var app = new Express();
 /**
  * Setup Nib
  */
-
 function compile(str, path) {
 	return stylus(str)
 		.set('filename', path)
 		.use(nib());
 }
 
+
 app.configure(function() {
-	/* Not Needed Anymore due to Binds.
-	app.use(function(req, res, next) {
-		//Dont have to pass the database around, it is now in every request in Express.
-		this.session = req.session;
-		next();
-	});
-	*/
-	app.use(Express.logger()); /* 'default', 'short', 'tiny', 'dev' */
+	//app.use(Express.logger()); /* 'default', 'short', 'tiny', 'dev' */
 	app.use(Express.bodyParser());
 	app.set('views', path.resolve(__dirname, '../app/views'));
 	app.set('view engine', 'jade');
@@ -52,11 +40,10 @@ app.configure(function() {
 		src: path.resolve(__dirname, '../public'),
 		compile: compile
 	}));
-	app.use(Express.static(path.resolve(__dirname, '../public')));
 	app.use(Express.bodyParser());
 	app.use(Express.cookieParser());
 	app.use(Express.session({
-		store: database.mongoose.model("Session"),
+		store: sessionStore,
 		secret: config.server.secret,
 		key: config.server.key,
 		cookie: {
@@ -64,6 +51,7 @@ app.configure(function() {
 			domain: '.' + config.server.domain
 		}
 	}));
+	app.use(Express.static(path.resolve(__dirname, '../public')));
 	app.use(app.router);
 });
 /**
@@ -75,21 +63,11 @@ var system = {
 	mongoose: database.mongoose,
 	library: library,
 	utils: utils,
-	app: app
+	app: app,
+	db: database,
+	session: sessionStore
 };
-/**
- * Load mySQL if we have a Config
- */
-if('mysql' in config){
-	system.mysql = database.mysql.createConnection(config.mysql);
-	utils.replaceClientOnDisconnect(system.mysql);
-}
-/**
- * Load Redis if we have a Config
- */
-if('redis' in config){
-	system.redis = database.redis.createClient(config.redis.post, config.redis.host, config.redis.options);
-}
+
 /**
  * Load the Controllers
  * @type {[type]}
@@ -114,13 +92,17 @@ for (var controller in Controllers) {
 	 */
 	if (Controllers[controller].hasOwnProperty('actions')) {
 		if (Controllers[controller].actions.hasOwnProperty('main')) {
-			app.get('/' + controller, Controllers[controller].actions.main.bind(SystemController));
+			app.get('/' + controller, function(req, res){
+				SystemController.loadRoute(req, res, controller, 'main', Controllers);
+			});
 		} else {
 			app.get('/' + controller, SystemController.missing);
 		}
 		for (var action in Controllers[controller].actions) {
 			if (action != 'main') {
-				app.get('/' + controller + '/' + action, Controllers[controller].actions[action].bind(SystemController));
+				app.get('/' + controller + '/' + action, function(req, res) {
+					SystemController.loadRoute(req, res, controller, action, Controllers);
+				});
 			}
 		}
 	}
@@ -130,6 +112,17 @@ for (var controller in Controllers) {
 	if (Controllers[controller].hasOwnProperty('init')) {
 		Controllers[controller].init.bind(SystemController)();
 	}
+
+	/**
+	 * Redirect all others to 404
+	 * @param  {[type]} req [description]
+	 * @param  {[type]} res [description]
+	 * @return {[type]}     [description]
+	 */
+	app.all('*', function(req, res) {
+	  res.status(404);
+	  res.send('404');
+	});
 }
 
 var server = http.createServer(app).listen(config.server.port);
@@ -149,85 +142,62 @@ io.set('transports', [
 	'websocket', 'flashsocket', 'htmlfile', 'xhr-polling', 'jsonp-polling'
 ]);
 
-io.set('authorization', function(data, accept) {
-	if (data.headers.cookie) {
+/**
+ * Use Express Sessions to authorize the socket based on Express Cookie.
+ */
+io.set('authorization', function(data, callback) {
+	if (!data.headers.cookie) {
+		return callback('No cookie transmitted.', false);
+	} else {
 		data.cookie = cookie.parse(data.headers.cookie);
 		data.sessionID = connect.utils.parseSignedCookie(data.cookie[config.server.key], config.server.secret);
-		
-		var Session = database.mongoose.model("Session").findById(data.sessionID, function(err, session){
-			if (err) {
-				// if we cannot grab a session, turn down the connection
-				accept(err.message, false);
-			} else {
-				//data.session = session;
-				data.session = session;
-				accept(null, true);
-			}
-		});
-		//var sess = new Session();
-		
-		/*database.mongoose.model("Session").get(data.sessionID, function(err, session) {
-			if (err) {
-				// if we cannot grab a session, turn down the connection
-				accept(err.message, false);
-			} else {
-				//data.session = session;
-				data.session = new database.model("Session").Session(data, session);
-				accept(null, true);
-			}
-		});
-		*/
-		/*
-		database.mongoose.model("Session").get(data.sessionID, function(err, session) {
+		sessionStore.load(data.sessionID, function(err, session){
 			if (err || !session) {
-				accept('Error', false);
-			} else {
-				// create a session object, passing data as request and our
-				// just acquired session data
-				data.session = new connect.middleware.session.Session(data, session);
-				accept(null, true);
-			}
+                callback(err, false);
+            } else {
+            	data.session = session;
+
+                return callback(null, true);
+            }
 		});
-*/
-	} else {
-		return accept('No cookie transmitted.', false);
 	}
 });
 /**
- * Start Sockets
+ * Start Socket Connection
  */
 io.sockets.on('connection', function(socket) {
-	socket.join(socket.handshake.sessionID);
+	
 	/**
-	 * Bind Socket to SystemController
+	 * Join socket on Session ID to message this socket only.
 	 */
-
+	socket.join(socket.handshake.sessionID);
+	
+	/**
+	 * Bind Socket to SystemController. We create a new controller per socket to keep peoples filthy hands off each others data.
+	 */
 	var SocketController = new(require('./controller'))();
+
 	for (var obj in system) {
 		SocketController.set(obj, system[obj]);
 	}
 	SocketController.set('socket', socket);
 	/**
-	 * Get session data and pass it to IO.
-	 * @param  {[type]} error   [description]
-	 * @param  {[type]} session [description]
-	 * @return {[type]}         [description]
+	 * We got Session from the authorization handshake.
 	 */
-
-	if(socket.handshake.session) {
-		SocketController.set('session', socket.handshake.session);
-	}
+	SocketController.set('session', socket.handshake.session);
 
 	/**
-	 * Loop through controllers and bind all websocket methods.
+	 * Loop through controllers and bind all websocket methods for this Socket.
 	 */
 	for (var controller in Controllers) {
 		if (Controllers[controller].hasOwnProperty('websockets')) {
 			for (var websocket in Controllers[controller].websockets) {
-				socket.on(controller + '/' + websocket, Controllers[controller].websockets[websocket].bind(SocketController));
+				socket.on(controller + '/' + websocket, function(data, response){
+					response(SocketController.loadSocket(data, controller, websocket, Controllers));
+				});
 			}
 		}
 	}
 });
 
-console.log('Listening on port ' + config.server.port);
+console.log('express and socket.io listening on port ' + config.server.port);

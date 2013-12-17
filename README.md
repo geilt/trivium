@@ -122,7 +122,7 @@ Folder: `/public/img/`
 
 You can organize the image folder however you want. Files will show up as `website.com/img/image.jpg`
 
-## JS
+## JavaScript
 
 Folder: `/public/js/`
 
