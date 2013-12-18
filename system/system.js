@@ -4,11 +4,13 @@
  */
 var config = require('../config'),
 	utils = require('./utils'),
+	fs = require('fs'),
 	database = require('./database'),
 	library = require('./library'),
 	path = require('path'),
 	Express = require('express'),
 	http = require('http'),
+	https = require('https'),
 	sio = require('socket.io'),
 	stylus = require('stylus'),
 	nib = require('nib'),
@@ -85,47 +87,57 @@ var Controllers = utils.loadDirectory(path.resolve(__dirname, '../app/controller
 /**
  * Loop through controllers.
  */
-for (var controller in Controllers) {
+utils.objectToArray(Controllers, true).forEach(function(controller) {
+	
 	/**
 	 * Loops through actions and bind controller and actions to routes.
 	 * main is always the root action if nothing is set. Main is also ignored.
 	 */
-	if (Controllers[controller].hasOwnProperty('actions')) {
-		if (Controllers[controller].actions.hasOwnProperty('main')) {
-			app.get('/' + controller, function(req, res){
-				SystemController.loadRoute(req, res, controller, 'main', Controllers);
+	if ('actions' in controller[0]) {
+
+		utils.objectToArray(controller[0].actions).forEach(function(action) {
+			app.get( ( (action[1] === 'main') ? '/' + controller[1] + '/' + action[1] : '/' + controller[1] ) , function(req, res) {
+				SystemController.loadRoute(req, res, action[0]);
 			});
-		} else {
-			app.get('/' + controller, SystemController.missing);
-		}
-		for (var action in Controllers[controller].actions) {
-			if (action != 'main') {
-				app.get('/' + controller + '/' + action, function(req, res) {
-					SystemController.loadRoute(req, res, controller, action, Controllers);
-				});
-			}
-		}
+		});
+
 	}
+
 	/**
 	 * Runs init function if set. Useful for timers, timeouts and processes to run when the server starts up.
 	 */
-	if (Controllers[controller].hasOwnProperty('init')) {
-		Controllers[controller].init.bind(SystemController)();
+	if ('init' in controller[0]) {
+		controller[0].init.bind(SystemController)();
 	}
+});
 
-	/**
-	 * Redirect all others to 404
-	 * @param  {[type]} req [description]
-	 * @param  {[type]} res [description]
-	 * @return {[type]}     [description]
-	 */
-	app.all('*', function(req, res) {
-	  res.status(404);
-	  res.send('404');
-	});
+/**
+ * Redirect all others to 404
+ * @param  {[type]} req [description]
+ * @param  {[type]} res [description]
+ * @return {[type]}     [description]
+ */
+app.all('*', function(req, res) {
+  res.status(404);
+  res.send('404');
+});
+
+/**
+ * Start the Server in SSL mode or Normal Mode.
+ */
+if('ssl' in config.server && utils.hasProperties(config.server.ssl, ['key', 'cert'])){
+	console.log('HTTPS MODE');
+	var server = https.createServer({
+		key: fs.readFileSync(config.server.ssl.key, 'utf8'),
+		cert: fs.readFileSync(config.server.ssl.cert, 'utf8'),
+		ca: [
+			fs.readFileSync(config.server.ssl.ca, 'utf8')
+		]
+	}, app).listen(config.server.port);
+} else {
+	console.log('HTTP MODE');
+	var server = http.createServer(app).listen(config.server.port);
 }
-
-var server = http.createServer(app).listen(config.server.port);
 
 var io = sio.listen(server, {
 	log: true
@@ -189,15 +201,26 @@ io.sockets.on('connection', function(socket) {
 	/**
 	 * Loop through controllers and bind all websocket methods for this Socket.
 	 */
-	for (var controller in Controllers) {
-		if (Controllers[controller].hasOwnProperty('websockets')) {
-			for (var websocket in Controllers[controller].websockets) {
-				socket.on(controller + '/' + websocket, function(data, response){
-					response(SocketController.loadSocket(data, controller, websocket, Controllers));
+	console.log('Connected');
+	console.log(Controllers);
+	function values(o) {
+		return Object.keys(o).map(function(a) {
+			console.log(a);
+			return [o[a],a];
+		})
+	};
+	utils.objectToArray(Controllers, true).forEach(function(controller) {
+		console.log('Controller', controller);
+		if('websockets' in controller[0]){
+			utils.objectToArray(controller[0].websockets, true).forEach(function(websocket) {
+				console.log('Socket', websocket);
+				socket.on(controller[1] + '/' + websocket[1], function(data, response){
+					console.log('Socket in Func', websocket);
+					response(SocketController.loadSocket(data, websocket[0]));
 				});
-			}
+			});
 		}
-	}
+	});
 });
 
 console.log('express and socket.io listening on port ' + config.server.port);

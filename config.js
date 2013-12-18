@@ -12,7 +12,7 @@ exports.server = {
 	root: __dirname, //Needed for System to run. Resolved Path issues.
 	secret: 'aspfnweovt234890pth9834hbt9w3', // Used for Sessions / Cookies
 	key: 'trivium', // Used for Cookies
-	session: 'mongo' //{mongo, mysql, memory, redis}
+	session: 'mongo' //{mongo, mysql, memory, redis},
 };
 /**
  * MongoDB

@@ -161,3 +161,14 @@ exports.hasProperties = function(obj, prop){
 	}
 	return false;
 };
+
+exports.objectToArray = function(o, preserveKeys){	
+	return Object.keys(o).map(function(a) {
+		console.log(a);
+		if(preserveKeys){
+			return [o[a],a];
+		} else {
+			return o[a];
+		}
+	});
+};
