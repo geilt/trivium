@@ -33,13 +33,13 @@ Controller.prototype.missing = function(req, res){
 Controller.prototype.model = function(model){
 	return this.db.model[model];
 }
-Controller.prototype.loadRoute = function(req, res, controller, action, controllers){
-	controllers[controller].actions[action](req, res, req.session);
+Controller.prototype.loadRoute = function(req, res, action){
+	action(req, res, req.session);
 };
-Controller.prototype.loadSocket = function(data, controller, action, controllers){
-	var response = controllers[controller].websockets[action](data, this.socket, this.session);
-	this.session.save();
-	return response;
+Controller.prototype.loadSocket = function(data, websocket){
+		var response = websocket(data, this.socket, this.session);
+		this.session.save();
+		return response;	
 }
 
 
