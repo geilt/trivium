@@ -56,25 +56,36 @@ app.configure(function() {
 	app.use(Express.static(path.resolve(__dirname, '../public')));
 	app.use(app.router);
 });
+
+/**
+ * Load the System Controller
+ * @type {[type]}
+ */
+var SystemController = new(require('./controller'))();
+
+var SystemModel = new(require('./model'))();
+
+SystemModel.set('db', database);
+
 /**
  * System Object. For passing into various Functions.
  * @type {Object}
  */
+var Models = utils.loadDirectory(path.resolve(__dirname, '../app/models'), '.model.js');
+
+var SystemModel = new(require('./model'))(Models);
+
+SystemModel.set('db', database);
+
 var system = {
 	config: config,
-	mongoose: database.mongoose,
 	library: library,
 	utils: utils,
 	app: app,
 	db: database,
-	session: sessionStore
+	session: sessionStore,
+	models: Models
 };
-
-/**
- * Load the Controllers
- * @type {[type]}
- */
-var SystemController = new(require('./controller'))();
 
 /**
  * Set Controller Objects.
@@ -82,8 +93,16 @@ var SystemController = new(require('./controller'))();
 for (var obj in system) {
 	SystemController.set(obj, system[obj]);
 }
+
+/**
+ * Load the Controllers and Models
+ */
 var Controllers = utils.loadDirectory(path.resolve(__dirname, '../app/controllers'), '.controller.js');
 
+
+
+
+//TODO NO WHAT? How do I get the models in the Controller to access the DB using a system model....
 /**
  * Loop through controllers.
  */
@@ -201,16 +220,7 @@ io.sockets.on('connection', function(socket) {
 	/**
 	 * Loop through controllers and bind all websocket methods for this Socket.
 	 */
-	console.log('Connected');
-	console.log(Controllers);
-	function values(o) {
-		return Object.keys(o).map(function(a) {
-			console.log(a);
-			return [o[a],a];
-		})
-	};
 	utils.objectToArray(Controllers, true).forEach(function(controller) {
-		console.log('Controller', controller);
 		if('websockets' in controller[0]){
 			utils.objectToArray(controller[0].websockets, true).forEach(function(websocket) {
 				console.log('Socket', websocket);

@@ -50,13 +50,13 @@ if(config.hasOwnProperty('mysql') && utils.hasProperties(config.mysql, ['host', 
 	/**
 	 * Make the connection if we have all the config data
 	 */
-	Mysql.createConnection(config.mysql);
+	var mySQLConnection = Mysql.createConnection(config.mysql);
 	/**
 	 * Make sure connections get reconnected if they timeout.
 	 */
-	//utils.replaceClientOnDisconnect(Mysql);
+	//replaceClientOnDisconnect(mySQLConnection);
 
-	module.exports.mysql = Mysql;
+	module.exports.mysql = mySQLConnection;
 }
 
 /**
@@ -72,7 +72,30 @@ if(config.hasOwnProperty('redis') && utils.hasProperties(config.redis, ['host', 
 	module.exports.redis = Redis;
 }
 
-/**
- * Load all app models
- */
-module.exports.models = require('./utils.js').loadDirectory(path.resolve(__dirname,'../app/models'), '.model.js');
+function replaceClientOnDisconnect(client) {
+	client.on("error", function(err) {
+		if (!err.fatal) {
+			return;
+		}
+
+		if (err.code !== "PROTOCOL_CONNECTION_LOST") {
+			throw err;
+		}
+		// client.config is actually a ConnectionConfig instance, not the original
+		// configuration. For most situations this is fine, but if you are doing 
+		// something more advanced with your connection configuration, then 
+		// you should check carefully as to whether this is actually going to do
+		// what you think it should do.
+		client = Mysql.createConnection(config.mysql);
+		
+		client.connect(function(error) {
+			if (error) {
+				// Well, we tried. The database has probably fallen over.
+				// That's fairly fatal for most applications, so we might as
+				// call it a day and go home.
+				process.exit(1);
+			}
+		});
+		replaceClientOnDisconnect(client);
+	});
+};
