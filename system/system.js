@@ -96,20 +96,17 @@ var Controllers = utils.loadDirectory(path.resolve(__dirname, '../app/controller
 /**
  * Loop through controllers.
  */
-utils.objectToArray(Controllers, true).forEach(function(controller) {
-	
+utils.objectToArray(Controllers, true).forEach(function(controller) {	
 	/**
 	 * Loops through actions and bind controller and actions to routes.
 	 * main is always the root action if nothing is set. Main is also ignored.
 	 */
 	if ('actions' in controller[0]) {
-
-		utils.objectToArray(controller[0].actions).forEach(function(action) {
+		utils.objectToArray(controller[0].actions, true).forEach(function(action) {
 			app.get( ( (action[1] !== 'main') ? '/' + controller[1] + '/' + action[1] : '/' + controller[1] ) , function(req, res) {
 				SystemController.loadRoute(req, res, action[0], action[1]);
 			});
 		});
-
 	}
 
 	/**
@@ -135,7 +132,6 @@ app.all('*', function(req, res) {
  * Start the Server in SSL mode or Normal Mode.
  */
 if('ssl' in config.server && utils.hasProperties(config.server.ssl, ['key', 'cert'])){
-	console.log('HTTPS MODE');
 	var SSLcredentials = {
 		key: fs.readFileSync(config.server.ssl.key, 'utf8'),
 		cert: fs.readFileSync(config.server.ssl.cert, 'utf8'),
@@ -222,7 +218,7 @@ io.sockets.on('connection', function(socket) {
 				console.log('Socket', websocket);
 				socket.on(controller[1] + '/' + websocket[1], function(data, response){
 					console.log('Socket in Func', websocket);
-					response(SocketController.loadSocket(data, websocket[0], websocket[1]));
+					response( SocketController.loadSocket( data, websocket[0], websocket[1]) );
 				});
 			});
 		}

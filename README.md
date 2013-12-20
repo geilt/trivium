@@ -31,6 +31,7 @@ Folder: `/app/controllers/` File Naming Convention: `yourcontroller.controller.j
 Trivium uses automaticallty configured [Express](https://github.com/visionmedia/express) routes based on the file names of the controller and the object names within. It uses a similar approach with [Socket.io](https://github.com/learnboost/socket.io/), the only difference being that there is no default (main) websocket as there is a default(main) Express route.
 
 Controllers accept 3 different values that should be placed into exports for auto loading. More information can be found in the included sample controller found at `/app/controllers/sample.controller.js`.
+
 ```js
 //Controller sample.controller.js
 module.exports = {
@@ -54,7 +55,9 @@ module.exports = {
 	websockets: {
 		sample: function(data, socket, session){
 			//Action Websocket for a Controller ('sample/sample')
-			socket.send({'result': true});
+			return {
+				'result': true
+			};
 		}
 	}
 };
@@ -82,6 +85,14 @@ this.session = null;
 ### Init & Cron (Single Fire, Timed or Reoccuring Events)
 
 You can place events that should be running persistently in the init function inside of each relevant controller. This will allow you to run "one time" blocks of code as well as use setTimeout or setInterval for processes that don't require user input. You can have an init on each controller and they will all run on load. This is a synchronous process as all inits are run in no particular order (May change in further versions).
+
+### Routes (Actions)
+
+Routes work like standard Express routes. If there are no actions in a controller it won't load any routes. Route format looks like this `/:controllerFileName/:actionFunctionName`. Setting a "main" action will bind `/:controllerFileName` to that action.
+
+### Websockets
+
+Trivium automatically creates websocket listeners in the following format `:controllerFileName/websocketFunctionName`. Websocket functions will automatically send back whatever you return in the function using socket.io `send()`. If you wish to send nothing either don't return or just return void.
 
 ```js
 init: function(){

@@ -41,13 +41,13 @@ Controller.prototype.loadRoute = function(req, res, action, controller){
 	if(controller in this.models){
 		this.model = this.models[controller];
 	}
-	action(req, res, req.session).bind(this);
+	action.bind(this)(req, res, req.session);
 };
 Controller.prototype.loadSocket = function(data, websocket, controller){
 	if(controller in this.models){
 		this.model = this.models[controller];
 	}
-	var response = websocket(data, this.socket, this.session).bind(this);
+	var response = websocket.bind(this)(data, this.socket, this.session);
 	this.session.save();
 	return response;	
 }
