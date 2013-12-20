@@ -1,7 +1,8 @@
 /**
  * Utils
  */
-var Filesystem = require('fs');
+var Filesystem = require('fs'),
+	Util = require('util');
 
 /**
  * Loads a directory of files automatically and returns them based on their file name.
@@ -120,33 +121,6 @@ exports.howLongAgo = function(date) {
 		return days_diff + ' days';
 	}
 };
-exports.replaceClientOnDisconnect = function(client) {
-	client.on("error", function(err) {
-		if (!err.fatal) {
-			return;
-		}
-
-		if (err.code !== "PROTOCOL_CONNECTION_LOST") {
-			throw err;
-		}
-
-		// client.config is actually a ConnectionConfig instance, not the original
-		// configuration. For most situations this is fine, but if you are doing 
-		// something more advanced with your connection configuration, then 
-		// you should check carefully as to whether this is actually going to do
-		// what you think it should do.
-		client = mysql.createConnection(client.config);
-		replaceClientOnDisconnect(client);
-		connection.connect(function(error) {
-			if (error) {
-				// Well, we tried. The database has probably fallen over.
-				// That's fairly fatal for most applications, so we might as
-				// call it a day and go home.
-				process.exit(1);
-			}
-		});
-	});
-};
 exports.hasProperties = function(obj, prop){
 	if( typeof obj === 'object' 
 		&& typeof prop === 'object' 
@@ -164,7 +138,6 @@ exports.hasProperties = function(obj, prop){
 
 exports.objectToArray = function(o, preserveKeys){	
 	return Object.keys(o).map(function(a) {
-		console.log(a);
 		if(preserveKeys){
 			return [o[a],a];
 		} else {
@@ -172,3 +145,6 @@ exports.objectToArray = function(o, preserveKeys){
 		}
 	});
 };
+exports.log = function(obj){
+	console.log( Util.inspect(obj, {showHidden: true, depth: null}) );
+}

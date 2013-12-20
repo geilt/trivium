@@ -56,25 +56,30 @@ app.configure(function() {
 	app.use(Express.static(path.resolve(__dirname, '../public')));
 	app.use(app.router);
 });
+
+/**
+ * Load the System Controller
+ * @type {[type]}
+ */
+var SystemController = new(require('./controller'))();
+
 /**
  * System Object. For passing into various Functions.
  * @type {Object}
  */
+var Models = utils.loadDirectory(path.resolve(__dirname, '../app/models'), '.model.js');
+
+var SystemModel = new(require('./model'))(Models);
+
 var system = {
 	config: config,
-	mongoose: database.mongoose,
 	library: library,
 	utils: utils,
 	app: app,
 	db: database,
-	session: sessionStore
+	session: sessionStore,
+	models: SystemModel
 };
-
-/**
- * Load the Controllers
- * @type {[type]}
- */
-var SystemController = new(require('./controller'))();
 
 /**
  * Set Controller Objects.
@@ -82,6 +87,10 @@ var SystemController = new(require('./controller'))();
 for (var obj in system) {
 	SystemController.set(obj, system[obj]);
 }
+
+/**
+ * Load the Controllers and Models
+ */
 var Controllers = utils.loadDirectory(path.resolve(__dirname, '../app/controllers'), '.controller.js');
 
 /**
@@ -96,8 +105,8 @@ utils.objectToArray(Controllers, true).forEach(function(controller) {
 	if ('actions' in controller[0]) {
 
 		utils.objectToArray(controller[0].actions).forEach(function(action) {
-			app.get( ( (action[1] === 'main') ? '/' + controller[1] + '/' + action[1] : '/' + controller[1] ) , function(req, res) {
-				SystemController.loadRoute(req, res, action[0]);
+			app.get( ( (action[1] !== 'main') ? '/' + controller[1] + '/' + action[1] : '/' + controller[1] ) , function(req, res) {
+				SystemController.loadRoute(req, res, action[0], action[1]);
 			});
 		});
 
@@ -106,8 +115,8 @@ utils.objectToArray(Controllers, true).forEach(function(controller) {
 	/**
 	 * Runs init function if set. Useful for timers, timeouts and processes to run when the server starts up.
 	 */
-	if ('init' in controller[0]) {
-		controller[0].init.bind(SystemController)();
+	if ('init' in controller[0] && typeof controller[0].init === 'function') {
+		SystemController.loadInit(controller[0].init, controller[1]);
 	}
 });
 
@@ -127,13 +136,19 @@ app.all('*', function(req, res) {
  */
 if('ssl' in config.server && utils.hasProperties(config.server.ssl, ['key', 'cert'])){
 	console.log('HTTPS MODE');
-	var server = https.createServer({
+	var SSLcredentials = {
 		key: fs.readFileSync(config.server.ssl.key, 'utf8'),
 		cert: fs.readFileSync(config.server.ssl.cert, 'utf8'),
 		ca: [
 			fs.readFileSync(config.server.ssl.ca, 'utf8')
 		]
-	}, app).listen(config.server.port);
+	};
+	if('ca' in config.server.ssl){
+		SSLcredentials.ca = [
+			fs.readFileSync(config.server.ssl.ca, 'utf8')
+		];
+	}
+	var server = https.createServer(SSLcredentials, app).listen(config.server.port);
 } else {
 	console.log('HTTP MODE');
 	var server = http.createServer(app).listen(config.server.port);
@@ -201,22 +216,13 @@ io.sockets.on('connection', function(socket) {
 	/**
 	 * Loop through controllers and bind all websocket methods for this Socket.
 	 */
-	console.log('Connected');
-	console.log(Controllers);
-	function values(o) {
-		return Object.keys(o).map(function(a) {
-			console.log(a);
-			return [o[a],a];
-		})
-	};
 	utils.objectToArray(Controllers, true).forEach(function(controller) {
-		console.log('Controller', controller);
 		if('websockets' in controller[0]){
 			utils.objectToArray(controller[0].websockets, true).forEach(function(websocket) {
 				console.log('Socket', websocket);
 				socket.on(controller[1] + '/' + websocket[1], function(data, response){
 					console.log('Socket in Func', websocket);
-					response(SocketController.loadSocket(data, websocket[0]));
+					response(SocketController.loadSocket(data, websocket[0], websocket[1]));
 				});
 			});
 		}

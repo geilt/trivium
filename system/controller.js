@@ -11,10 +11,11 @@ function Controller() {
 
 	this.library = null;
 	this.utils = null;
-	
+
 	this.session = null;
-	
-	this.init = null;
+
+	this.models = null;
+	this.model = null;
 }
 Controller.prototype.set = function(name, obj) {
 	if(this.hasOwnProperty(name)){
@@ -30,17 +31,25 @@ Controller.prototype.get = function(name){
 Controller.prototype.missing = function(req, res){
 	res.send('Missing Action');
 };
-Controller.prototype.model = function(model){
-	return this.db.model[model];
+Controller.prototype.loadInit = function(init, controller){
+	if(controller in this.models){
+		this.model = this.models[controller];
+	}
+	init.bind(this)();
 }
-Controller.prototype.loadRoute = function(req, res, action){
-	action(req, res, req.session);
+Controller.prototype.loadRoute = function(req, res, action, controller){
+	if(controller in this.models){
+		this.model = this.models[controller];
+	}
+	action(req, res, req.session).bind(this);
 };
-Controller.prototype.loadSocket = function(data, websocket){
-		var response = websocket(data, this.socket, this.session);
-		this.session.save();
-		return response;	
+Controller.prototype.loadSocket = function(data, websocket, controller){
+	if(controller in this.models){
+		this.model = this.models[controller];
+	}
+	var response = websocket(data, this.socket, this.session).bind(this);
+	this.session.save();
+	return response;	
 }
-
 
 module.exports = Controller;
