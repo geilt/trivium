@@ -3,7 +3,7 @@ trivium.js
 
 A Node Framework based on the concept that routes, web sockets and chronological events should be trivial.
 
-Latest Version: `1.0`
+Latest Version: `1.5`
 
 Trivium does all the configuration for you to run a basic web app with socket.io, express routes and even timed or one time / server start events. We do this by giving you a template by which to plan out your app. All you have to do is add the appropriate files and declarations and you are good to go! Trivium is great for front-end websites, back-end applications, API's and pretty much anything else.
 
@@ -35,16 +35,16 @@ Controllers accept 3 different values that should be placed into exports for aut
 //Controller sample.controller.js
 module.exports = {
 	init: function() {
-	
+		//Do some Stuff here!
 	}
 	actions: {
-		main: function(res, req) {
+		main: function(res, req, session) {
 			//Default Action Route for a Controller (website.com/sample)
 			res.render('sample', {
 				title: 'Main Action'
 			});
 		},
-		sample: function(res, req){
+		sample: function(res, req, session){
 			//Action Route for a Controller (website.com/sample/sample)
 			res.render('sample', {
 				title: 'Sample Action'
@@ -52,11 +52,9 @@ module.exports = {
 		}
 	}, 
 	websockets: {
-		sample: function(data, send){
+		sample: function(data, socket, session){
 			//Action Websocket for a Controller ('sample/sample')
-			res.render('sample', {
-				title: 'Sample Action'
-			});
+			socket.send({'result': true});
 		}
 	}
 };
@@ -67,9 +65,10 @@ Controllers have had the following values bound into them via a System Controlle
 ```js
 this.config = null;
 
-this.mongoose = null;
-this.mysql = null;
-this.redis = null;
+this.db = null;
+
+this.models = null;
+this.model = null;
 
 this.socket = null;
 this.app = null;
@@ -94,7 +93,27 @@ init: function(){
 
 Folder: `/app/models/` File Naming Convention: `sample.model.js`
 
-Models should include Schema declarations at the top of the file. By default, Trivium uses [Mongoose](https://github.com/learnboost/mongoose/) for Mongo and prefers to use Mongo for session data. For information on Mongoose Schemas the [Mongoose Documentation](http://mongoosejs.com/), please see (Further Revisions will open different automated session options based on config values present for redis and mySQL or use the filesytem if no database is present at all).
+Trivium will auto load models into each Controller as `this.models.modelName`. If it finds a model with the same name as the Controller then it will set it to this.model in the controller. You can call a model function with `this.model.modelFunction()` Otherwise use `this.models.modelName.modelFunction()` to run any other model function. You can also set values to your exports in a model and access them with `this.model.modelVar` or `this.models.modelName.modelVar`. The `this` from Controllers is automatically bound to all Model Functions in a Controller.
+```js
+this.config = null;
+
+this.db = null;
+
+this.models = null;
+this.model = null;
+
+this.socket = null;
+this.app = null;
+
+this.library = null;
+this.utils = null;
+```
+
+## Schemas
+
+Folder: `/app/schemas/` File Naming Convention: `sample.schema.js`
+
+If you are using Mongo/Mongoose you can drop any schema into the schema folder and it will be auto loaded if you have valid and working Mongo Credentials.
 
 ## Libraries
 
@@ -107,6 +126,12 @@ Libraries collect files in library folders as objects. The above example would b
 Folder: `/app/views/` File Naming Convention: `sample.jade`
 
 Trivium uses [Jade](https://github.com/visionmedia/jade) templates to render views.
+
+## Sessions
+
+By default Trivium uses the Memory Store for Sessions if nothing is configured. Trivium can use [Mongoose](https://github.com/learnboost/mongoose/) for Mongo Sessions, Redis or mySQL Sessions. For information on Mongoose Schemas see [Mongoose Documentation](http://mongoosejs.com/).
+
+Sessions work both in Routes Actions and Websocket Actions. The Websocket session hooks into the Express Session store, so Express and Socket.io share the same session for authorization and session manipulation. 
 
 ## CSS
 
