@@ -28,9 +28,6 @@ Model.prototype.set = function(name, obj) {
 		this[name] = obj;
 	}
 };
-Model.prototype.model = function(model, action, args){
-	this.model[model][action].bind(this);
-}
 Model.prototype.get = function(name){
 	if(this.hasOwnProperty(name)){
 		return this[name];
