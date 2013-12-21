@@ -35,17 +35,17 @@ Controllers accept 3 different values that should be placed into exports for aut
 ```js
 //Controller sample.controller.js
 module.exports = {
-	init: function() {
+	init: function(req) {
 		//Do some Stuff here!
 	}
 	actions: {
-		main: function(res, req, session) {
+		main: function(req, res) {
 			//Default Action Route for a Controller (website.com/sample)
 			res.render('sample', {
 				title: 'Main Action'
 			});
 		},
-		sample: function(res, req, session){
+		sample: function(req, res){
 			//Action Route for a Controller (website.com/sample/sample)
 			res.render('sample', {
 				title: 'Sample Action'
@@ -53,8 +53,8 @@ module.exports = {
 		}
 	}, 
 	websockets: {
-		sample: function(data, socket, session){
-			//Action Websocket for a Controller ('sample/sample')
+		sample: function(req, res){
+			//Action Websocket for a Controller ('/sample/sample')
 			return {
 				'result': true
 			};
@@ -63,61 +63,90 @@ module.exports = {
 };
 ```
 
-Controllers have had the following values bound into them via a System Controller. The null values are replaced with system generated data at runtime.
-
-```js
-this.config = null;
-
-this.db = null;
-
-this.models = null;
-this.model = null;
-
-this.socket = null;
-this.app = null;
-
-this.library = null;
-this.utils = null;
-
-this.session = null;
-```
-
 ### Init & Cron (Single Fire, Timed or Reoccuring Events)
 
-You can place events that should be running persistently in the init function inside of each relevant controller. This will allow you to run "one time" blocks of code as well as use setTimeout or setInterval for processes that don't require user input. You can have an init on each controller and they will all run on load. This is a synchronous process as all inits are run in no particular order (May change in further versions).
+You can place events that should be running persistently in the init function inside of each relevant controller. This will allow you to run "one time" blocks of code as well as use setTimeout or setInterval for processes that don't require user input. You can have an init on each controller and they will all run on load. This is a synchronous process as all inits are run in no particular order.
 
+```js
+init: function(res){
+	//Do your stuff here.	
+}
+```
+We mimic our Express and Websockets requests `req` object to maintain standards. Init has no response `res` object.
+
+```js
+var req = {
+	sockets: 		this.sockets,
+	controller: 	controller[1],
+	utils: 			this.utils,
+	library: 		this.library,
+	app: 			this.app,
+	config: 		this.config,
+	db: 			this.db,
+	models: 		this.models,
+	model: 			this.model
+}
+```
 ### Routes (Actions)
 
 Routes work like standard Express routes. If there are no actions in a controller it won't load any routes. Route format looks like this `/:controllerFileName/:actionFunctionName`. Setting a "main" action will bind `/:controllerFileName` to that action.
 
-### Websockets
-
-Trivium automatically creates websocket listeners in the following format `:controllerFileName/websocketFunctionName`. Websocket functions will automatically send back whatever you return in the function using socket.io `send()`. If you wish to send nothing either don't return or just return void.
-
+We bind some extra fields into Expresses request `req` before running our function. This makes sure this critical system data gets to the Controller function.
 ```js
-init: function(){
-	//Do your stuff here.	
-}
+req.controller  = 	controller[1];
+req.action 		= 	action[1];
+req.utils 		=	this.utils;
+req.library 	=	this.library;
+req.app 		=	this.app;
+req.config 		=	this.config;
+req.db 			=	this.db;
+req.models 		=	this.models;
+req.model 		=	this.model;
 ```
 
+### Websockets
+
+Trivium automatically creates websocket listeners in the following format mirroring Express routes `/:controllerFileName/:websocketFunctionName`. Use res.send() inside your websocket function to return data back to socket.io. if your need to respond to an emit().
+
+The following are the extra parameters set for requests `req` from our master Controller.
+```js
+var req = {
+	params: 		data || {},
+	socket: 		this.socket,
+	websocket: 		websocket[1],
+	controller: 	controller[1],
+	session: 		this.session,
+	utils: 			this.utils,
+	library: 		this.library,
+	app: 			this.app,
+	config: 		this.config,
+	db: 			this.db,
+	models: 		this.models,
+	model: 			this.model
+}
+```
+We also include our own response `res` object with a send method to mimic Express.
+```js
+var res = {
+	send: function(result){
+		this.session.save();
+		callback(result);
+	}.bind(this)
+};
+```
 ## Models
 
 Folder: `/app/models/` File Naming Convention: `sample.model.js`
 
-Trivium will auto load models into each Controller as `this.models.modelName`. If it finds a model with the same name as the Controller then it will set it to this.model in the controller. You can call a model function with `this.model.modelFunction()` Otherwise use `this.models.modelName.modelFunction()` to run any other model function. You can also set values to your exports in a model and access them with `this.model.modelVar` or `this.models.modelName.modelVar`. The `this` from Controllers is automatically bound to all Model Functions in a Controller.
+Trivium will auto load models into each Controller request for init, action and websocket requests `req` as `req.models.modelName`. This created a standard among all 3 tasks and functionstypes. If it finds a model with the same name as the Controller then it will set it to `req.model` in the controller. You can call a model function with `req.model.modelFunction()` Otherwise use `req.models.modelName.modelFunction()` to run any other model function. You can also set values to your exports in a model and access them with `req.model.modelVar` or `this.models.modelName.modelVar`. 
+
+These are the extra variables available in each model. Each model function also has this data bound to it's scope automatically
 ```js
-this.config = null;
-
-this.db = null;
-
-this.models = null;
-this.model = null;
-
-this.socket = null;
-this.app = null;
-
-this.library = null;
-this.utils = null;
+this.models
+this.db
+this.utils
+this.config
+this.library
 ```
 
 ## Schemas

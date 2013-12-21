@@ -94,7 +94,7 @@ for (var obj in system) {
 var Controllers = utils.loadDirectory(path.resolve(__dirname, '../app/controllers'), '.controller.js');
 
 /**
- * Loop through controllers.
+ * Loop through controllers
  */
 utils.objectToArray(Controllers, true).forEach(function(controller) {	
 	/**
@@ -103,17 +103,18 @@ utils.objectToArray(Controllers, true).forEach(function(controller) {
 	 */
 	if ('actions' in controller[0]) {
 		utils.objectToArray(controller[0].actions, true).forEach(function(action) {
+			if(action[1] !== 'main'){
+				app.get( ( '/' + controller[1] + '/' + action[1] + '/:event/:id' ) , function(req, res) {
+					SystemController.loadRoute(req, res, controller, action);
+				});
+				app.get( ( '/' + controller[1] + '/' + action[1] + '/:id' ) , function(req, res) {
+					SystemController.loadRoute(req, res, controller, action);
+				});
+			}
 			app.get( ( (action[1] !== 'main') ? '/' + controller[1] + '/' + action[1] : '/' + controller[1] ) , function(req, res) {
-				SystemController.loadRoute(req, res, action[0], action[1]);
+				SystemController.loadRoute(req, res, controller, action);
 			});
 		});
-	}
-
-	/**
-	 * Runs init function if set. Useful for timers, timeouts and processes to run when the server starts up.
-	 */
-	if ('init' in controller[0] && typeof controller[0].init === 'function') {
-		SystemController.loadInit(controller[0].init, controller[1]);
 	}
 });
 
@@ -146,7 +147,6 @@ if('ssl' in config.server && utils.hasProperties(config.server.ssl, ['key', 'cer
 	}
 	var server = https.createServer(SSLcredentials, app).listen(config.server.port);
 } else {
-	console.log('HTTP MODE');
 	var server = http.createServer(app).listen(config.server.port);
 }
 
@@ -160,7 +160,7 @@ var io = sio.listen(server, {
 io.enable('browser client minification'); // send minified client
 //io.enable('browser client etag'); // apply etag caching logic based on version number
 //io.enable('browser client gzip'); // gzip the file
-//io.set('log level', 1);
+io.set('log level', 1);
 io.set('transports', [
 	'websocket', 'flashsocket', 'htmlfile', 'xhr-polling', 'jsonp-polling'
 ]);
@@ -215,10 +215,10 @@ io.sockets.on('connection', function(socket) {
 	utils.objectToArray(Controllers, true).forEach(function(controller) {
 		if('websockets' in controller[0]){
 			utils.objectToArray(controller[0].websockets, true).forEach(function(websocket) {
-				console.log('Socket', websocket);
 				socket.on(controller[1] + '/' + websocket[1], function(data, response){
-					console.log('Socket in Func', websocket);
-					response( SocketController.loadSocket( data, websocket[0], websocket[1]) );
+					SocketController.loadSocket( data, controller, websocket, function(result){
+						response(result);
+					});
 				});
 			});
 		}
@@ -226,3 +226,19 @@ io.sockets.on('connection', function(socket) {
 });
 
 console.log('express and socket.io listening on port ' + config.server.port);
+
+var InitController = new(require('./controller'))();
+
+for (var obj in system) {
+	InitController.set(obj, system[obj]);
+}
+InitController.set('sockets', io.sockets);
+utils.objectToArray(Controllers, true).forEach(function(controller) {
+	/**
+	 * Runs init function if set. Useful for timers, timeouts and processes to run when the server starts up.
+	 */
+	if ('init' in controller[0] && typeof controller[0].init === 'function') {
+		InitController.loadInit( controller );
+	}
+});
+
